@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
 	_ "github.com/mattn/go-sqlite3"
@@ -20,7 +19,7 @@ type PostsController struct {
 
 func (c *PostsController) Index(rw http.ResponseWriter, r *http.Request, p httprouter.Params) error {
 	var title, content string
-	err := c.QueryRow("select title, content from posts").Scan(&title, &content)
+	err := c.QueryRow("SELECT title, content FROM posts").Scan(&title, &content)
 	if err != nil {
 		log.Println(err.Error())
 		return err
@@ -30,7 +29,56 @@ func (c *PostsController) Index(rw http.ResponseWriter, r *http.Request, p httpr
 }
 
 func (c *PostsController) Show(rw http.ResponseWriter, r *http.Request, p httprouter.Params) error {
-	return errors.New("Damn")
+	var title, content string
+	postId := p.ByName("id")
+	err := c.QueryRow("SELECT title, content FROM posts WHERE rowid = ?", postId).Scan(&title, &content)
+	if err != nil {
+		log.Println(err.Error())
+		return err
+	}
+	post := NewPost(title, content)
+	c.HTML(rw, http.StatusOK, "show", post)
+	return nil
+}
+
+func (c *PostsController) New(rw http.ResponseWriter, r *http.Request, p httprouter.Params) error {
+	post := NewPost("", "")
+	err := c.HTML(rw, http.StatusOK, "edit", post)
+	if err != nil {
+		log.Println(err.Error())
+		return err
+	}
+	return nil
+}
+
+func (c *PostsController) Create(rw http.ResponseWriter, r *http.Request, p httprouter.Params) error {
+	title, content := p.ByName("title"), p.ByName("content")
+	log.Println(title, content)
+	res, err := c.Exec("INSERT INTO posts (title, content) VALUES (?, ?)", title, content)
+	if err != nil {
+		log.Println(err.Error())
+		return err
+	}
+	postId, err := res.LastInsertId()
+	if err != nil {
+		log.Println(err.Error())
+		return err
+	}
+	http.Redirect(rw, r, fmt.Sprintf("/posts/%d", postId), http.StatusSeeOther)
+	return nil
+}
+
+func (c *PostsController) Edit(rw http.ResponseWriter, r *http.Request, p httprouter.Params) error {
+	postId := p.ByName("id")
+	var title, content string
+	err := c.QueryRow("SELECT title, content FROM posts WHERE rowid = ?", postId).Scan(&title, &content)
+	if err != nil {
+		log.Println(err.Error())
+		return err
+	}
+	post := NewPost(title, content)
+	c.HTML(rw, http.StatusOK, "edit", post)
+	return nil
 }
 
 // override Action to 404 page

@@ -18,13 +18,22 @@ type PostsController struct {
 }
 
 func (c *PostsController) Index(rw http.ResponseWriter, r *http.Request, p httprouter.Params) error {
-	var title, content string
-	err := c.QueryRow("SELECT title, content FROM posts").Scan(&title, &content)
+	rows, err := c.Query("SELECT title, content FROM posts")
 	if err != nil {
 		log.Println(err.Error())
 		return err
 	}
-	c.Data(rw, 200, []byte(fmt.Sprintf("title is %s and content is %s", title, content)))
+	defer rows.Close()
+	posts := make([]*Post, 0)
+	for rows.Next() {
+		var title, content string
+		if err := rows.Scan(&title, &content); err != nil {
+			log.Println(err.Error())
+			return err
+		}
+		posts = append(posts, NewPost(title, content))
+	}
+	c.HTML(rw, http.StatusOK, "index", posts)
 	return nil
 }
 

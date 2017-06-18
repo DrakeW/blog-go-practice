@@ -1,23 +1,39 @@
 package main
 
 import (
-	"github.com/russross/blackfriday"
+	"database/sql"
+	"github.com/julienschmidt/httprouter"
+	_ "github.com/mattn/go-sqlite3"
+	"gopkg.in/unrolled/render.v1"
+	"log"
 	"net/http"
-	"os"
 )
 
 func main() {
-	http.HandleFunc("/markdown", http.HandlerFunc(GenerateMarkdown))
-	http.Handle("/", http.FileServer(http.Dir("public")))
+	db := NewDB()
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
+	c := &PostsController{
+		Render: render.New(render.Options{}),
+		DB:     db,
 	}
-	http.ListenAndServe(":"+port, nil)
+
+	router := httprouter.New()
+	router.GET("/posts", c.Action(c.Index))
+	router.GET("/posts/:id", c.Action(c.Show))
+
+	log.Println("Listening on :8080")
+	http.ListenAndServe(":8080", router)
 }
 
-func GenerateMarkdown(rw http.ResponseWriter, req *http.Request) {
-	markdown := blackfriday.MarkdownCommon([]byte(req.FormValue("body")))
-	rw.Write(markdown)
+func NewDB() *sql.DB {
+	db, err := sql.Open("sqlite3", "example.sqlite")
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = db.Exec("create table if not exists posts(title text, content text)")
+	if err != nil {
+		panic(err)
+	}
+	return db
 }

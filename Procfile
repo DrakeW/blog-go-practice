@@ -1,1 +1,1 @@
-web: go-markdown-generator
+web: fileserver

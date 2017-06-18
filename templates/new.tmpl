@@ -5,13 +5,13 @@
   <body>
     <div class="container">
       <div class="page-title">
-        <h1>Edit Post</h1>
+        <h1>New Post</h1>
         <p class="lead">Create your post with markdown</p>
         <hr />
       </div>
-      <form action="/posts/{{ .Id }}" method="POST">
+      <form action="/posts" method="POST">
         <div class="form-group">
-          <input class="form-control" name="title" cols="30" rows="10" value="{{ .Title }}"></input>
+          <input class="form-control" name="title" cols="30" rows="10">{{ .Title }}</input>
         </div>
         <div class="form-group">
           <textarea class="form-control" name="content" cols="30" rows="10">{{ .Content }}</textarea>

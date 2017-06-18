@@ -23,6 +23,7 @@ func main() {
 	router.GET("/new_post", c.Action(c.New))
 	router.POST("/posts", c.Action(c.Create))
 	router.GET("/posts/:id/edit", c.Action(c.Edit))
+	router.POST("/posts/:id", c.Action(c.Update))
 
 	log.Println("Listening on :8080")
 	http.ListenAndServe(":8080", router)

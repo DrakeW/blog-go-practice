@@ -52,7 +52,7 @@ func (c *PostsController) Show(rw http.ResponseWriter, r *http.Request, p httpro
 
 func (c *PostsController) New(rw http.ResponseWriter, r *http.Request, p httprouter.Params) error {
 	post := NewPost("", "")
-	err := c.HTML(rw, http.StatusOK, "edit", post)
+	err := c.HTML(rw, http.StatusOK, "new", post)
 	if err != nil {
 		log.Println(err.Error())
 		return err
@@ -62,7 +62,6 @@ func (c *PostsController) New(rw http.ResponseWriter, r *http.Request, p httprou
 
 func (c *PostsController) Create(rw http.ResponseWriter, r *http.Request, p httprouter.Params) error {
 	title, content := r.FormValue("title"), r.FormValue("content")
-	log.Println(title, content)
 	res, err := c.Exec("INSERT INTO posts (title, content) VALUES (?, ?)", title, content)
 	if err != nil {
 		log.Println(err.Error())
@@ -86,7 +85,19 @@ func (c *PostsController) Edit(rw http.ResponseWriter, r *http.Request, p httpro
 		return err
 	}
 	post := NewPost(title, content)
+	post.Id = postId // manually set post id
 	c.HTML(rw, http.StatusOK, "edit", post)
+	return nil
+}
+
+func (c *PostsController) Update(rw http.ResponseWriter, r *http.Request, p httprouter.Params) error {
+	postId, title, content := p.ByName("id"), r.FormValue("title"), r.FormValue("content")
+	_, err := c.Exec("UPDATE posts SET title = ?, content = ? WHERE rowid = ?", title, content, postId)
+	if err != nil {
+		log.Println(err.Error())
+		return err
+	}
+	http.Redirect(rw, r, fmt.Sprintf("/posts/%s", postId), http.StatusSeeOther)
 	return nil
 }
 

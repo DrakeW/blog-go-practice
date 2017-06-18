@@ -52,7 +52,7 @@ func (c *PostsController) New(rw http.ResponseWriter, r *http.Request, p httprou
 }
 
 func (c *PostsController) Create(rw http.ResponseWriter, r *http.Request, p httprouter.Params) error {
-	title, content := p.ByName("title"), p.ByName("content")
+	title, content := r.FormValue("title"), r.FormValue("content")
 	log.Println(title, content)
 	res, err := c.Exec("INSERT INTO posts (title, content) VALUES (?, ?)", title, content)
 	if err != nil {
